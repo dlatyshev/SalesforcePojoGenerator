@@ -5,6 +5,8 @@ import json
 from generator import PojoGenerator
 from restapi import ApiClient
 
+SOBJECTS_FILE_NAME = "sobjects.json"
+
 parser = argparse.ArgumentParser(description='Salesforce OAuth2 Client')
 parser.add_argument('-u', '--username', help='Salesforce admin name', required=True)
 parser.add_argument('-p', '--password', help='Salesforce admin password', required=True)
@@ -20,16 +22,16 @@ api_client = ApiClient(args.username, args.password, args.client_id, args.client
 def get_available_sobjects():
     global sobjects
     sobjects = api_client.get_sobjects()
-    with open("sobjects.json", "w") as file:
+    with open(SOBJECTS_FILE_NAME, "w") as file:
         file.write(json.dumps(sobjects))
 
 
-if os.path.exists("sobjects.json"):
+if os.path.exists(SOBJECTS_FILE_NAME):
     answer = input("You already have a file with sobjects. Would you like to overwrite it? (y/n)")
     if answer == "y":
         get_available_sobjects()
     elif answer == "n":
-        sobjects = json.load(open("sobjects.json"))
+        sobjects = json.load(open(SOBJECTS_FILE_NAME))
     else:
         print("Invalid answer. Exiting...")
         exit(1)

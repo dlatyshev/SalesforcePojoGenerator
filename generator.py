@@ -26,13 +26,14 @@ class PojoGenerator:
         self.fields = fields
 
     def generate_pojo(self, class_access_level="public", method_access_level="private",
-                      package_name="com.salesforce.sobjects"):
+                      package_name="com.customertimes.neo.model"):
         with open(f"pojos/{self.class_name}.java", "w") as file:
             file.write(f"package {package_name};\n\n")
             file.write("@NoArgsConstructor\n")
             file.write("@AllArgsConstructor\n")
             file.write("@Data\n")
             file.write("@Builder\n")
+            file.write("@JsonIgnoreProperties(ignoreUnknown = true)\n")
             file.write(f"{class_access_level} class {self.class_name} {{\n\n")
             for field in self.fields:
                 file.write(f"\t@JsonProperty(\"{field['name']}\")\n")
@@ -43,10 +44,7 @@ class PojoGenerator:
                         field_name = field_name.replace("APXT_Redlining__", "")
 
                     if field_type == "picklist" or field_type == "multipicklist":
-                        enum_name = self.class_name + field_name.replace(" ", "").replace("-", "").replace(".", "")
-                        if "__c" in enum_name or "__r" in enum_name:
-                            enum_name = enum_name[:-3]
-                            enum_name = "".join([word.capitalize() if word.islower() else word for word in enum_name.split("_")])
+                        enum_name = self.__generate_enum_name(field_name)
                         self.__generate_enum(enum_name, field, package_name)
                         if field_type == "picklist":
                             file.write(f"\t{method_access_level} {enum_name} {self.__generate_field_name(field_name)};\n\n")
@@ -57,6 +55,13 @@ class PojoGenerator:
                 except KeyError:
                     print(f"The field of type {field['type']} is not supported yet. Please, add it to the types_map.")
             file.write("}\n")
+
+    def __generate_enum_name(self, field_name):
+        enum_name = self.class_name + field_name.replace(" ", "").replace("-", "").replace(".", "")
+        if "__c" in enum_name or "__r" in enum_name:
+            enum_name = enum_name[:-3]
+            enum_name = "".join([word.capitalize() if word.islower() else word for word in enum_name.split("_")])
+        return enum_name
 
     @staticmethod
     def __generate_field_name(raw_field_name: str) -> str:
